@@ -13,12 +13,20 @@
             background-color: #f4f4f4;
         }
         .container {
-            max-width: 1200px;
+            max-width: 1400px;
             margin: auto;
             background: white;
             padding: 20px;
             border-radius: 5px;
             box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            display: flex;
+        }
+        .calendar-container {
+            flex: 3;
+            margin-right: 20px;
+        }
+        .sidebar {
+            flex: 1;
         }
         h1, h2 {
             color: #333;
@@ -62,26 +70,138 @@
             font-weight: bold;
             margin-bottom: 5px;
         }
-        .event {
-            background-color: #e6f3ff;
-            margin: 2px 0;
-            padding: 2px;
-            font-size: 0.8em;
-            border-radius: 3px;
-        }
         #studyTime {
             margin-top: 20px;
             padding: 10px;
             background-color: #e6f3ff;
             border-radius: 5px;
         }
+        #addEventBtn {
+            margin-bottom: 20px;
+            padding: 10px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        dialog {
+            border: none;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        dialog form {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .event {
+        background-color: #e6f3ff;
+        margin: 2px 0;
+        padding: 2px 5px;
+        font-size: 0.8em;
+        border-radius: 3px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        }
+        .event-text {
+            flex-grow: 1;
+            margin-right: 5px;
+        }
+        .event-buttons {
+            display: flex;
+            gap: 2px;
+        }
+        .event button {
+            font-size: 0.7em;
+            padding: 2px 4px;
+            background-color: #f0f0f0;
+            border: 1px solid #ccc;
+            border-radius: 3px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .event button:hover {
+            background-color: #e0e0e0;
+        }
+        .event .editEvent {
+            color: #4CAF50;
+        }
+        .event .deleteEvent {
+            color: #f44336;
+        }
+        .event {
+            cursor: move;
+            transition: all 0.3s;
+        }
+
+        .event:hover {
+            transform: scale(1.05);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+
+        .event.assignment { background-color: #ffcccb; }
+        .event.exam { background-color: #ffdab9; }
+        .event.social { background-color: #98fb98; }
+        .event.other { background-color: #e6e6fa; }
+
+        .month-header {
+            cursor: pointer;
+        }
+
+        .month-header::after {
+            content: ' ▼';
+            font-size: 0.8em;
+        }
+
+        .month-header.collapsed::after {
+            content: ' ►';
+        }
+
+        .month.collapsed .calendar {
+            display: none;
+        }
+
+        .event-details {
+            display: none;
+            position: absolute;
+            background: white;
+            border: 1px solid #ddd;
+            padding: 5px;
+            border-radius: 3px;
+            z-index: 1000;
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>Class Organizer - Calendar</h1>
-        <div id="calendarContainer"></div>
-        <div id="studyTime"></div>
+        <div class="calendar-container">
+            <h1>Class Organizer - Calendar</h1>
+            <button id="addEventBtn">Add Event</button>
+            <div id="calendarContainer"></div>
+        </div>
+        <div class="sidebar">
+            <div id="studyTime"></div>
+        </div>
+
+        <dialog id="addEventDialog">
+            <form id="addEventForm">
+                <h2>Add Event</h2>
+                <label for="eventType">Event Type:</label>
+                <select id="eventType" required>
+                    <option value="Work">Work</option>
+                    <option value="Social">Social</option>
+                    <option value="Other">Other</option>
+                </select>
+                <label for="eventName">Event Name:</label>
+                <input type="text" id="eventName" required>
+                <label for="eventDate">Date:</label>
+                <input type="date" id="eventDate" required>
+                <button type="submit">Add Event</button>
+                <button type="button" id="cancelAddEvent">Cancel</button>
+            </form>
+        </dialog>
     </div>
 
     <script>
@@ -105,7 +225,6 @@
 
             while (currentDate <= endDate) {
                 if (currentDate.getMonth() !== currentMonth || currentDate.getFullYear() !== currentYear) {
-                    // Start a new month
                     currentMonth = currentDate.getMonth();
                     currentYear = currentDate.getFullYear();
                     createMonthCalendar(currentYear, currentMonth);
@@ -121,6 +240,30 @@
 
             simulateStudyTime(semesterData);
 
+            const addEventBtn = document.getElementById('addEventBtn');
+            const addEventDialog = document.getElementById('addEventDialog');
+            const addEventForm = document.getElementById('addEventForm');
+            const cancelAddEventBtn = document.getElementById('cancelAddEvent');
+
+            addEventBtn.addEventListener('click', () => {
+                addEventDialog.showModal();
+            });
+
+            cancelAddEventBtn.addEventListener('click', () => {
+                addEventDialog.close();
+            });
+
+            addEventForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                const eventType = document.getElementById('eventType').value;
+                const eventName = document.getElementById('eventName').value;
+                const eventDate = document.getElementById('eventDate').value;
+
+                addEventToCalendar(eventType, eventName, eventDate);
+                addEventDialog.close();
+                addEventForm.reset();
+            });
+
             function createMonthCalendar(year, month) {
                 const monthDiv = document.createElement('div');
                 monthDiv.className = 'month';
@@ -133,7 +276,6 @@
                 const calendar = document.createElement('div');
                 calendar.className = 'calendar';
 
-                // Add day headers
                 days.forEach(day => {
                     const dayHeader = document.createElement('div');
                     dayHeader.className = 'day-header';
@@ -141,18 +283,15 @@
                     calendar.appendChild(dayHeader);
                 });
 
-                // Add days
                 const firstDay = new Date(year, month, 1);
                 const lastDay = new Date(year, month + 1, 0);
 
-                // Add empty cells for days before the first of the month
                 for (let i = 0; i < firstDay.getDay(); i++) {
                     const emptyDay = document.createElement('div');
                     emptyDay.className = 'day empty';
                     calendar.appendChild(emptyDay);
                 }
 
-                // Add days of the month
                 for (let i = 1; i <= lastDay.getDate(); i++) {
                     const day = document.createElement('div');
                     day.className = 'day';
@@ -172,35 +311,175 @@
                         course[type].forEach(item => {
                             const itemDate = new Date(item.date);
                             if (itemDate.toDateString() === date.toDateString()) {
-                                const eventDiv = document.createElement('div');
-                                eventDiv.className = 'event';
-                                eventDiv.textContent = `${course.name}: ${item.name}`;
-                                dayElement.appendChild(eventDiv);
+                                addEventToCalendar(course.name, item.name, date.toISOString().split('T')[0]);
                             }
                         });
                     });
                 });
             }
-        });
 
-        function simulateStudyTime(semesterData) {
-            const studyTimeDiv = document.getElementById('studyTime');
-            let totalStudyHours = 0;
+            function getWeekNumber(date) {
+                const firstDayOfYear = new Date(date.getFullYear(), 0, 1);
+                const pastDaysOfYear = (date - firstDayOfYear) / 86400000;
+                return Math.ceil((pastDaysOfYear + firstDayOfYear.getDay() + 1) / 7);
+            }
 
-            semesterData.courses.forEach(course => {
-                const courseEvents = course.assignments.length + course.tests.length + course.exams.length;
-                const courseStudyHours = courseEvents * 2; // Simulate 2 hours of study per event
-                totalStudyHours += courseStudyHours;
+            function getWeekRange(date) {
+                const weekStart = new Date(date);
+                weekStart.setDate(date.getDate() - date.getDay());
+                const weekEnd = new Date(weekStart);
+                weekEnd.setDate(weekStart.getDate() + 6);
+                return {
+                    start: weekStart,
+                    end: weekEnd
+                };
+            }
 
-                const courseStudyDiv = document.createElement('div');
-                courseStudyDiv.textContent = `${course.name}: ${courseStudyHours} hours`;
-                studyTimeDiv.appendChild(courseStudyDiv);
+            function formatDate(date) {
+                const month = (date.getMonth() + 1).toString().padStart(2, '0');
+                const day = date.getDate().toString().padStart(2, '0');
+                return `${month}-${day}`;
+            }
+
+            function simulateStudyTime(semesterData) {
+                const studyTimeDiv = document.getElementById('studyTime');
+                studyTimeDiv.innerHTML = ''; // Clear previous content
+
+                const currentDate = new Date();
+                const currentWeek = getWeekNumber(currentDate);
+                const weekRange = getWeekRange(currentDate);
+
+                let totalStudyHours = 0;
+                const courseStudyHours = {};
+
+                semesterData.courses.forEach(course => {
+                    const courseEvents = course.assignments.concat(course.tests, course.exams);
+                    const eventsThisWeek = courseEvents.filter(event => getWeekNumber(new Date(event.date)) === currentWeek).length;
+                    const courseHours = Math.max(10, 10 + eventsThisWeek * 2);
+                    totalStudyHours += courseHours;
+
+                    courseStudyHours[course.name] = courseHours;
+                });
+
+                const weekStudyDiv = document.createElement('div');
+                weekStudyDiv.innerHTML = `
+                <h2>Recommended Study Time</h2>
+                <p class="subtitle">For the Week of: ${formatDate(weekRange.start)} to ${formatDate(weekRange.end)}</p>
+                `;
+                studyTimeDiv.appendChild(weekStudyDiv);
+
+                Object.entries(courseStudyHours).forEach(([courseName, hours]) => {
+                    const courseStudyDiv = document.createElement('div');
+                    courseStudyDiv.textContent = `${courseName}: ${hours} hours`;
+                    studyTimeDiv.appendChild(courseStudyDiv);
+                });
+
+                const totalStudyDiv = document.createElement('div');
+                totalStudyDiv.innerHTML = `<strong>Total: ${totalStudyHours} hours</strong>`;
+                studyTimeDiv.appendChild(totalStudyDiv);
+            }
+
+            function addEventToCalendar(type, name, date) {
+                const dayElement = document.querySelector(`.day[data-date="${date}"]`);
+                if (dayElement) {
+                    const eventDiv = document.createElement('div');
+                    eventDiv.className = `event ${type.toLowerCase()}`;
+                    eventDiv.innerHTML = `
+                        <span class="event-text">${type}: ${name}</span>
+                        <div class="event-buttons">
+                            <button class="editEvent" title="Edit">✎</button>
+                            <button class="deleteEvent" title="Delete">✖</button>
+                        </div>
+                    `;
+                    eventDiv.setAttribute('data-event-id', Date.now());
+                    dayElement.appendChild(eventDiv);
+
+                    const editBtn = eventDiv.querySelector('.editEvent');
+                    const deleteBtn = eventDiv.querySelector('.deleteEvent');
+
+                    editBtn.addEventListener('click', () => editEvent(eventDiv));
+                    deleteBtn.addEventListener('click', () => deleteEvent(eventDiv));
+
+                    // Hover effect for more details
+                    eventDiv.addEventListener('mouseenter', showEventDetails);
+                    eventDiv.addEventListener('mouseleave', hideEventDetails);
+                }
+            }
+
+            function editEvent(eventDiv) {
+                const eventId = eventDiv.getAttribute('data-event-id');
+                const eventText = eventDiv.querySelector('.event-text').textContent;
+                const [type, name] = eventText.split(': ');
+
+                document.getElementById('eventType').value = type;
+                document.getElementById('eventName').value = name;
+                document.getElementById('eventDate').value = eventDiv.closest('.day').getAttribute('data-date');
+
+                addEventDialog.showModal();
+
+                addEventForm.onsubmit = (e) => {
+                    e.preventDefault();
+                    const newType = document.getElementById('eventType').value;
+                    const newName = document.getElementById('eventName').value;
+                    const newDate = document.getElementById('eventDate').value;
+
+                    eventDiv.querySelector('.event-text').textContent = `${newType}: ${newName}`;
+                    if (newDate !== eventDiv.closest('.day').getAttribute('data-date')) {
+                        const newDayElement = document.querySelector(`.day[data-date="${newDate}"]`);
+                        if (newDayElement) {
+                            newDayElement.appendChild(eventDiv);
+                        }
+                    }
+
+                    addEventDialog.close();
+                    addEventForm.reset();
+                    addEventForm.onsubmit = null;
+                };
+            }
+
+            function deleteEvent(eventDiv) {
+                if (confirm('Are you sure you want to delete this event?')) {
+                    eventDiv.remove();
+                }
+            }
+            
+            function showEventDetails(e) {
+                const eventDiv = e.currentTarget;
+                const detailsDiv = document.createElement('div');
+                detailsDiv.className = 'event-details';
+                detailsDiv.textContent = eventDiv.querySelector('.event-text').textContent;
+                document.body.appendChild(detailsDiv);
+
+                const rect = eventDiv.getBoundingClientRect();
+                detailsDiv.style.left = `${rect.left}px`;
+                detailsDiv.style.top = `${rect.bottom + 5}px`;
+                detailsDiv.style.display = 'block';
+            }
+
+            function hideEventDetails() {
+                const detailsDiv = document.querySelector('.event-details');
+                if (detailsDiv) {
+                    detailsDiv.remove();
+                }
+            }
+
+            // Collapsible months
+            document.addEventListener('click', function(e) {
+                if (e.target.classList.contains('month-header')) {
+                    e.target.classList.toggle('collapsed');
+                    e.target.closest('.month').classList.toggle('collapsed');
+                }
             });
 
-            const totalStudyDiv = document.createElement('div');
-            totalStudyDiv.innerHTML = `<strong>Total Recommended Study Time: ${totalStudyHours} hours</strong>`;
-            studyTimeDiv.appendChild(totalStudyDiv);
-        }
+            // Quick add event
+            document.addEventListener('dblclick', function(e) {
+                if (e.target.classList.contains('day')) {
+                    const date = e.target.getAttribute('data-date');
+                    document.getElementById('eventDate').value = date;
+                    addEventDialog.showModal();
+                }
+            });
+        });
     </script>
 </body>
 </html>
