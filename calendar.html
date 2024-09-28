@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Class Organizer - Calendar</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+        .container {
+            max-width: 1200px;
+            margin: auto;
+            background: white;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        h1, h2 {
+            color: #333;
+        }
+        .month {
+            margin-bottom: 30px;
+        }
+        .month-header {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px;
+            text-align: center;
+            font-size: 1.2em;
+            border-radius: 5px 5px 0 0;
+        }
+        .calendar {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 5px;
+            background-color: #fff;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 0 0 5px 5px;
+        }
+        .day-header {
+            font-weight: bold;
+            text-align: center;
+            background-color: #f0f0f0;
+            padding: 5px;
+        }
+        .day {
+            border: 1px solid #ddd;
+            padding: 5px;
+            min-height: 100px;
+            background-color: #fff;
+        }
+        .day.empty {
+            background-color: #f9f9f9;
+        }
+        .date {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        .event {
+            background-color: #e6f3ff;
+            margin: 2px 0;
+            padding: 2px;
+            font-size: 0.8em;
+            border-radius: 3px;
+        }
+        #studyTime {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #e6f3ff;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Class Organizer - Calendar</h1>
+        <div id="calendarContainer"></div>
+        <div id="studyTime"></div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const semesterData = JSON.parse(localStorage.getItem('semesterData'));
+            if (!semesterData) {
+                alert('No semester data found. Please go back and enter your courses.');
+                return;
+            }
+
+            const startDate = new Date(semesterData.semesterStart);
+            const endDate = new Date(semesterData.semesterEnd);
+            const calendarContainer = document.getElementById('calendarContainer');
+
+            const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+            const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+            let currentDate = new Date(startDate);
+            let currentMonth = currentDate.getMonth();
+            let currentYear = currentDate.getFullYear();
+
+            while (currentDate <= endDate) {
+                if (currentDate.getMonth() !== currentMonth || currentDate.getFullYear() !== currentYear) {
+                    // Start a new month
+                    currentMonth = currentDate.getMonth();
+                    currentYear = currentDate.getFullYear();
+                    createMonthCalendar(currentYear, currentMonth);
+                }
+
+                const dayElement = document.querySelector(`.day[data-date="${currentDate.toISOString().split('T')[0]}"]`);
+                if (dayElement) {
+                    addEventsToDay(dayElement, currentDate, semesterData.courses);
+                }
+
+                currentDate.setDate(currentDate.getDate() + 1);
+            }
+
+            simulateStudyTime(semesterData);
+
+            function createMonthCalendar(year, month) {
+                const monthDiv = document.createElement('div');
+                monthDiv.className = 'month';
+                
+                const monthHeader = document.createElement('div');
+                monthHeader.className = 'month-header';
+                monthHeader.textContent = `${months[month]} ${year}`;
+                monthDiv.appendChild(monthHeader);
+
+                const calendar = document.createElement('div');
+                calendar.className = 'calendar';
+
+                // Add day headers
+                days.forEach(day => {
+                    const dayHeader = document.createElement('div');
+                    dayHeader.className = 'day-header';
+                    dayHeader.textContent = day;
+                    calendar.appendChild(dayHeader);
+                });
+
+                // Add days
+                const firstDay = new Date(year, month, 1);
+                const lastDay = new Date(year, month + 1, 0);
+
+                // Add empty cells for days before the first of the month
+                for (let i = 0; i < firstDay.getDay(); i++) {
+                    const emptyDay = document.createElement('div');
+                    emptyDay.className = 'day empty';
+                    calendar.appendChild(emptyDay);
+                }
+
+                // Add days of the month
+                for (let i = 1; i <= lastDay.getDate(); i++) {
+                    const day = document.createElement('div');
+                    day.className = 'day';
+                    const currentDate = new Date(year, month, i);
+                    day.setAttribute('data-date', currentDate.toISOString().split('T')[0]);
+                    day.innerHTML = `<div class="date">${i}</div>`;
+                    calendar.appendChild(day);
+                }
+
+                monthDiv.appendChild(calendar);
+                calendarContainer.appendChild(monthDiv);
+            }
+
+            function addEventsToDay(dayElement, date, courses) {
+                courses.forEach(course => {
+                    ['assignments', 'tests', 'exams'].forEach(type => {
+                        course[type].forEach(item => {
+                            const itemDate = new Date(item.date);
+                            if (itemDate.toDateString() === date.toDateString()) {
+                                const eventDiv = document.createElement('div');
+                                eventDiv.className = 'event';
+                                eventDiv.textContent = `${course.name}: ${item.name}`;
+                                dayElement.appendChild(eventDiv);
+                            }
+                        });
+                    });
+                });
+            }
+        });
+
+        function simulateStudyTime(semesterData) {
+            const studyTimeDiv = document.getElementById('studyTime');
+            let totalStudyHours = 0;
+
+            semesterData.courses.forEach(course => {
+                const courseEvents = course.assignments.length + course.tests.length + course.exams.length;
+                const courseStudyHours = courseEvents * 2; // Simulate 2 hours of study per event
+                totalStudyHours += courseStudyHours;
+
+                const courseStudyDiv = document.createElement('div');
+                courseStudyDiv.textContent = `${course.name}: ${courseStudyHours} hours`;
+                studyTimeDiv.appendChild(courseStudyDiv);
+            });
+
+            const totalStudyDiv = document.createElement('div');
+            totalStudyDiv.innerHTML = `<strong>Total Recommended Study Time: ${totalStudyHours} hours</strong>`;
+            studyTimeDiv.appendChild(totalStudyDiv);
+        }
+    </script>
+</body>
+</html>
