@@ -1,0 +1,102 @@
+import simpy
+import numpy as np
+import logging
+import csv
+
+# Initialize logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+
+class Student:
+    def __init__(self, study_time_pomo=None, study_time_con=None):
+        """Initializes a new Student object with specified attributes."""
+        self.study_time_pomo = study_time_pomo
+        self.study_time_con = study_time_con
+
+class StudySimulation:
+    def __init__(self, env):
+        """Initializes the study simulation with specified SimPy environment."""
+        self.env = env
+        self.students = []
+
+    def generate_study_times_normal(self, num_students, mean=60, std_dev=15):
+        """Generates study times using a normal distribution."""
+        for _ in range(num_students):
+            # Generate normally distributed study times with mean and standard deviation
+            study_time = np.random.normal(mean, std_dev)
+            # Ensure study time is within the 0-120 minute range
+            study_time = max(0, min(120, study_time))
+            break_time = study_time * 0.17  # Pomodoro includes break time
+            study_time_pomo = study_time - break_time
+            # Create a student object
+            student = Student(study_time_pomo=study_time_pomo)
+            self.students.append(student)
+            logging.info(f"Generated Pomodoro study time: {study_time_pomo:.2f} minutes")
+
+    def generate_study_times_gamma(self, num_students, shape=2.0, scale=30.0):
+        """Generates study times using a gamma distribution."""
+        for _ in range(num_students):
+            # Generate study times using the gamma distribution
+            study_time_con = np.random.gamma(shape, scale)
+            # Ensure study time is within the 0-120 minute range
+            study_time_con = max(0, min(120, study_time_con))
+            # Create a student object and append it to the list
+            student = Student(study_time_con=study_time_con)
+            self.students.append(student)
+            logging.info(f"Generated Continuous study time: {study_time_con:.2f} minutes")
+
+    def save_study_data_normal(self, filename='study_time_normal.csv'):
+        """Saves Pomodoro study data to a CSV file."""
+        with open(filename, 'w') as file:
+            file.write('Study Time Pomo\n')
+            for student in self.students:
+                pomo = student.study_time_pomo if student.study_time_pomo is not None else ""
+                file.write(f"{pomo}\n")
+        logging.info(f"Pomodoro study data saved to {filename}")
+
+    def save_study_data_gamma(self, filename='study_time_gamma.csv'):
+        """Saves Continuous study data to a CSV file."""
+        with open(filename, 'w') as file:
+            file.write('Study Time Con\n')
+            for student in self.students:
+                con = student.study_time_con if student.study_time_con is not None else ""
+                file.write(f"{con}\n")
+        logging.info(f"Continuous study data saved to {filename}")
+
+    def run_study_simulation(self, num_students_normal, num_students_gamma, num_replications, study_technique):
+        """Runs the simulation based on the study technique (Pomodoro or Continuous)."""
+        for replication in range(num_replications):
+            logging.info(f"Starting replication {replication + 1}")
+            if study_technique == 'Pomodoro':
+                self.generate_study_times_normal(num_students_normal)
+            elif study_technique == 'Continuous':
+                self.generate_study_times_gamma(num_students_gamma)
+            logging.info(f"Replication {replication + 1} completed")
+
+def run_simulation():
+    """Runs the study simulation."""
+    env = simpy.Environment()  # SimPy environment
+    simulation = StudySimulation(env)  # Create simulation object
+
+    # Allow user to input the number of replications and study technique
+    try:
+        num_replications = int(input("Enter the number of replications: "))
+        study_technique = input("Choose study technique (Pomodoro or Continuous): ").capitalize()
+        if study_technique not in ['Pomodoro', 'Continuous']:
+            raise ValueError("Invalid study technique. Choose either 'Pomodoro' or 'Continuous'.")
+    except ValueError as e:
+        print(f"Error: {e}")
+        return
+
+    # Run the simulation with user-defined replications and study technique
+    simulation.run_study_simulation(num_students_normal=5, num_students_gamma=5, num_replications=num_replications, study_technique=study_technique)
+
+    # Save the results to the respective CSV file based on study technique
+    if study_technique == 'Pomodoro':
+        simulation.save_study_data_normal()
+    elif study_technique == 'Continuous':
+        simulation.save_study_data_gamma()
+
+    logging.info("Simulation completed.")
+
+if __name__ == "__main__":
+    run_simulation()
