@@ -1,0 +1,113 @@
+const fs = require('fs');
+const { log } = console;
+
+// Utility functions for random number generation
+function randomNormal(mean, stdDev) {
+    // Use Box-Muller transform to generate a normal distribution from two uniform random numbers
+    let u = 1 - Math.random(); // Subtract from 1 to avoid Math.log(0)
+    let v = Math.random();
+    let z = Math.sqrt(-2.0 * Math.log(u)) * Math.cos(2.0 * Math.PI * v);
+    return z * stdDev + mean;
+}
+
+// Student class
+class Student {
+    constructor(studyTimePomo = null, studyTimeCon = null) {
+        this.studyTimePomo = studyTimePomo;
+        this.studyTimeCon = studyTimeCon;
+    }
+}
+
+// Study Simulation class
+class StudySimulation {
+    constructor() {
+        this.students = [];
+    }
+
+    generateStudyTimesPomo(numStudents, mean = 60, stdDev = 15) {
+        // Clear the list of students before generating new data
+        this.students = [];
+        for (let i = 0; i < numStudents; i++) {
+            // Generate a normally distributed study time
+            let studyTime = randomNormal(mean, stdDev);
+            studyTime = Math.max(0, Math.min(120, studyTime)); // Clamp study time between 0 and 120 minutes
+            let breakTime = studyTime * 0.17; // 17% break time in Pomodoro
+            let studyTimePomo = studyTime - breakTime;
+            this.students.push(new Student(studyTimePomo));
+            log(`Generated Pomodoro study time: ${studyTimePomo.toFixed(2)} minutes`);
+        }
+    }
+
+    generateStudyTimesCon(numStudents, mean = 60, stdDev = 15) {
+        // Clear the list of students before generating new data
+        this.students = [];
+        for (let i = 0; i < numStudents; i++) {
+            // Generate a normally distributed study time
+            let studyTimeCon = randomNormal(mean, stdDev);
+            studyTimeCon = Math.max(0, Math.min(120, studyTimeCon)); // Clamp study time between 0 and 120 minutes
+            this.students.push(new Student(null, studyTimeCon));
+            log(`Generated Continuous study time: ${studyTimeCon.toFixed(2)} minutes`);
+        }
+    }
+
+    saveStudyData(filename, studyTechnique) {
+        // Prepare the CSV data
+        let data = '';
+        if (studyTechnique === 'Pomodoro') {
+            data = 'Study Time Pomo\n';
+            this.students.forEach(student => {
+                data += `${student.studyTimePomo !== null ? student.studyTimePomo : ''}\n`;
+            });
+        } else if (studyTechnique === 'Continuous') {
+            data = 'Study Time Con\n';
+            this.students.forEach(student => {
+                data += `${student.studyTimeCon !== null ? student.studyTimeCon : ''}\n`;
+            });
+        }
+
+        // Write the data to a CSV file
+        fs.writeFileSync(filename, data);
+        log(`${studyTechnique} study data saved to ${filename}`);
+    }
+
+    runStudySimulation(numStudentsPomo, numStudentsCon, numReplications, studyTechnique) {
+        for (let replication = 0; replication < numReplications; replication++) {
+            log(`Starting replication ${replication + 1}`);
+            if (studyTechnique === 'Pomodoro') {
+                this.generateStudyTimesPomo(numStudentsPomo);
+                this.saveStudyData(`study_time_pomo_replication_${replication + 1}.csv`, studyTechnique);
+            } else if (studyTechnique === 'Continuous') {
+                this.generateStudyTimesCon(numStudentsCon);
+                this.saveStudyData(`study_time_con_replication_${replication + 1}.csv`, studyTechnique);
+            }
+            log(`Replication ${replication + 1} completed`);
+        }
+    }
+}
+
+// Function to run the simulation
+function runSimulation() {
+    const simulation = new StudySimulation();
+
+    // Get user input from the command line
+    const readline = require('readline').createInterface({
+        input: process.stdin,
+        output: process.stdout,
+    });
+
+    readline.question('Enter the number of replications: ', numReplications => {
+        readline.question("Choose study technique (Pomodoro or Continuous): ", studyTechnique => {
+            studyTechnique = studyTechnique.charAt(0).toUpperCase() + studyTechnique.slice(1).toLowerCase();
+            
+            if (['Pomodoro', 'Continuous'].includes(studyTechnique)) {
+                simulation.runStudySimulation(5, 5, parseInt(numReplications), studyTechnique);
+            } else {
+                log("Invalid study technique. Choose either 'Pomodoro' or 'Continuous'.");
+            }
+            readline.close();
+        });
+    });
+}
+
+// Run the simulation
+runSimulation();
