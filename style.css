@@ -1,0 +1,183 @@
+body {
+    font-family: Arial, sans-serif;
+    line-height: 1.6;
+    margin: 0;
+    padding: 20px;
+    background-color: #f4f4f4;
+}
+.container {
+    max-width: 1400px;
+    margin: auto;
+    background: white;
+    padding: 20px;
+    border-radius: 5px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    display: flex;
+}
+.calendar-container {
+    flex: 3;
+    margin-right: 20px;
+}
+.sidebar {
+    flex: 1;
+}
+h1, h2 {
+    color: #333;
+}
+.month {
+    margin-bottom: 30px;
+}
+.month-header {
+    background-color: #4CAF50;
+    color: white;
+    padding: 10px;
+    text-align: center;
+    font-size: 1.2em;
+    border-radius: 5px 5px 0 0;
+}
+.calendar {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 5px;
+    background-color: #fff;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 0 0 5px 5px;
+}
+.day-header {
+    font-weight: bold;
+    text-align: center;
+    background-color: #f0f0f0;
+    padding: 5px;
+}
+.day {
+    border: 1px solid #ddd;
+    padding: 5px;
+    min-height: 100px;
+    background-color: #fff;
+}
+.day.empty {
+    background-color: #f9f9f9;
+}
+.date {
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+#studyTime {
+    margin-top: 20px;
+    padding: 10px;
+    background-color: #e6f3ff;
+    border-radius: 5px;
+}
+#addEventBtn {
+    margin-bottom: 20px;
+    padding: 10px;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+dialog {
+    border: none;
+    border-radius: 5px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+}
+dialog form {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+.event {
+background-color: #e6f3ff;
+margin: 2px 0;
+padding: 2px 5px;
+font-size: 0.8em;
+border-radius: 3px;
+display: flex;
+justify-content: space-between;
+align-items: center;
+}
+.event-text {
+    flex-grow: 1;
+    margin-right: 5px;
+}
+.event-buttons {
+    display: flex;
+    gap: 2px;
+}
+.event button {
+    font-size: 0.7em;
+    padding: 2px 4px;
+    background-color: #f0f0f0;
+    border: 1px solid #ccc;
+    border-radius: 3px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+.event button:hover {
+    background-color: #e0e0e0;
+}
+.event .editEvent {
+    color: #4CAF50;
+}
+.event .deleteEvent {
+    color: #f44336;
+}
+.event {
+    transition: all 0.3s;
+}
+
+.event:hover {
+    transform: scale(1.05);
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+
+.event.assignment { background-color: #ffcccb; }
+.event.exam { background-color: #ffdab9; }
+.event.social { background-color: #98fb98; }
+.event.other { background-color: #e6e6fa; }
+
+.month-header {
+    cursor: pointer;
+}
+
+.month-header::after {
+    content: ' ▼';
+    font-size: 0.8em;
+}
+
+.month-header.collapsed::after {
+    content: ' ►';
+}
+
+.month.collapsed .calendar {
+    display: none;
+}
+
+.event-details {
+    display: none;
+    position: absolute;
+    background: white;
+    border: 1px solid #ddd;
+    padding: 5px;
+    border-radius: 3px;
+    z-index: 1000;
+}
+#productivity-timer {
+    background-color: #f0f0f0;
+    padding: 15px;
+    border-radius: 5px;
+    margin-top: 20px;
+}
+
+#timer {
+    font-size: 24px;
+    font-weight: bold;
+    text-align: center;
+    margin: 10px 0;
+}
+#productivity-timer button {
+    margin: 5px;
+    padding: 5px 10px;
+}
