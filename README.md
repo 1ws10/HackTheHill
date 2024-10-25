@@ -13,3 +13,5 @@ Note: This website uses local storage to pass data between pages. Please ensure 
 - courses.html (Course input page)
 - calendar.html (Calendar and organizer page)
 - styles.css
+
+https://devpost.com/software/studios-mkylbj
