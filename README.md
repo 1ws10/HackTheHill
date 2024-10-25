@@ -15,3 +15,4 @@ Note: This website uses local storage to pass data between pages. Please ensure 
 - styles.css
 
 https://devpost.com/software/studios-mkylbj
+https://www.canva.com/design/DAGSJ6Opk-4/IclP9xcroO2PaL8SzC7CKw/edit
